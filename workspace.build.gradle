@@ -1,0 +1,230 @@
+plugins {
+    id 'java-library'
+    id 'maven-publish'
+    id 'net.neoforged.moddev' version '2.0.140'
+    id 'idea'
+}
+
+version = mod_version
+group = mod_group_id
+
+repositories {
+    mavenLocal()
+    mavenCentral()
+
+    flatDir {
+        dirs("libs")
+    }
+    flatDir {
+        dirs("zlib")
+    }
+    maven {
+        url "https://cursemaven.com"
+        content {
+            includeGroup "curse.maven"
+        }
+    }
+    maven {
+        name = "Modrinth"
+        url = "https://api.modrinth.com/maven"
+        content {
+            includeGroup "maven.modrinth"
+        }
+    }
+    maven {
+        url "https://maven.su5ed.dev/releases"
+    }
+}
+
+base {
+    archivesName = mod_name_s
+}
+
+java.toolchain.languageVersion = JavaLanguageVersion.of(21)
+
+neoForge {
+    version = project.neo_version
+    accessTransformers = project.files('src/main/resources/META-INF/accesstransformer.cfg')
+
+    runs {
+        client {
+            client()
+            gameDirectory = rootProject.file('run/ecliptic/client')
+            systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
+        }
+
+        server {
+            server()
+            gameDirectory = rootProject.file('run/ecliptic/server')
+            systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
+            programArgument '--nogui'
+        }
+
+        gameTestServer {
+            type = "gameTestServer"
+            systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
+        }
+
+        data {
+            data()
+            programArguments.addAll '--mod', project.mod_id, '--all', '--output', file('src/generated/resources/').getAbsolutePath(), '--existing', file('src/main/resources/').getAbsolutePath()
+        }
+
+        configureEach {
+            systemProperty 'forge.logging.markers', 'REGISTRIES'
+            logLevel = org.slf4j.event.Level.DEBUG
+        }
+    }
+
+    mods {
+        "${mod_id}" {
+            sourceSet(sourceSets.main)
+        }
+    }
+}
+
+sourceSets {
+    onlyMain {
+    }
+}
+
+sourceSets.main.resources { srcDir 'src/generated/resources' }
+
+configurations {
+    runtimeClasspath.extendsFrom localRuntime
+}
+
+tasks.named('processResources', Copy) {
+    def resolvedModId = mod_id
+    def langDir = project.layout.projectDirectory.dir("src/main/resources/assets/${resolvedModId}/lang").asFile
+    def genDir = project.layout.projectDirectory.dir("src/generated/resources/assets/${resolvedModId}/lang").asFile
+    def langFiles = ['en_us.json', 'zh_cn.json']
+    duplicatesStrategy = DuplicatesStrategy.INCLUDE
+
+    doFirst {
+        ext.originalJsonMap = [:]
+
+        langFiles.each { fileName ->
+            def mainFile = new File(langDir, fileName)
+            def genFile = new File(genDir, fileName)
+
+            ext.originalJsonMap[fileName] = genFile.exists() ? genFile.text : null
+
+            def mergedMap = [:]
+            [mainFile, genFile].each { f ->
+                if (f.exists()) mergedMap.putAll(new groovy.json.JsonSlurper().parse(f))
+            }
+
+            if (genFile.exists()) {
+                genFile.text = groovy.json.JsonOutput.prettyPrint(groovy.json.JsonOutput.toJson(mergedMap))
+            }
+        }
+    }
+
+    doLast {
+        langFiles.each { fileName ->
+            def genFile = new File(genDir, fileName)
+            if (ext.originalJsonMap[fileName] != null) {
+                genFile.text = ext.originalJsonMap[fileName]
+            }
+        }
+    }
+}
+
+dependencies {
+    implementation "curse.maven:jei-238222:7181665"
+    implementation "curse.maven:jade-324717:6291517"
+    compileOnly("curse.maven:the-one-probe-245211:6106998")
+
+    compileOnly("zlib:Sub:1.20.1-forge-0.0")
+    compileOnly("curse.maven:embeddium-908741:5556146")
+
+    compileOnly "org.sinytra.forgified-fabric-api:fabric-renderer-api-v1:3.4.0+acb05a39d1"
+    compileOnly "org.sinytra.forgified-fabric-api:fabric-renderer-indigo:1.7.0+acb05a39d1"
+
+    compileOnly "maven.modrinth:sodium:mc1.21.1-0.6.13-neoforge"
+    compileOnly("curse.maven:irisshaders-455508:6117625")
+
+    onlyMainRuntimeOnly("curse.maven:irisshaders-455508:6213632")
+    onlyMainRuntimeOnly "maven.modrinth:sodium:mc1.21.1-0.6.13-neoforge"
+    onlyMainRuntimeOnly("curse.maven:journeymap-32274:6213329")
+
+    compileOnly "curse.maven:distant-horizons-508933:7097104"
+
+    onlyMainRuntimeOnly("curse.maven:spark-361579:5434153")
+    onlyMainRuntimeOnly "curse.maven:t88-663112:6138989"
+
+    onlyMainRuntimeOnly "curse.maven:neocontinuity-1377279:7178602"
+    onlyMainRuntimeOnly "curse.maven:fusion-connected-textures-854949:7058347"
+
+    implementation "curse.maven:patchouli-306770:6842247"
+    compileOnly "curse.maven:kubejs-238086:7143884"
+
+    fileTree(dir: 'libs', include: ['*.jar']).each { File file ->
+        def fileName = file.name
+        onlyMainRuntimeOnly(
+                name: fileName.substring(0, fileName.lastIndexOf(".jar")),
+                group: 'libs',
+                version: fileName.substring(0, fileName.indexOf(".jar"))
+        )
+    }
+
+    compileOnly "curse.maven:modern-ui-352491:6956436"
+    onlyMainRuntimeOnly "curse.maven:modern-ui-352491:6956436"
+
+    compileOnly 'org.projectlombok:lombok:1.18.38'
+    annotationProcessor 'org.projectlombok:lombok:1.18.38'
+
+    compileOnly("net.time4j:time4j-base:5.9.4")
+}
+
+tasks.withType(ProcessResources).configureEach {
+    var replaceProperties = [
+            minecraft_version      : minecraft_version,
+            minecraft_version_range: minecraft_version_range,
+            neo_version            : neo_version,
+            neo_version_range      : neo_version_range,
+            loader_version_range   : loader_version_range,
+            mod_id                 : mod_id,
+            mod_name               : mod_name,
+            mod_license            : mod_license,
+            mod_version            : mod_version,
+            mod_authors            : mod_authors,
+            mod_description        : mod_description
+    ]
+    inputs.properties replaceProperties
+
+    filesMatching(['META-INF/neoforge.mods.toml']) {
+        expand replaceProperties
+    }
+}
+
+tasks.register('deleteCache') {
+    delete 'src/generated/resources/.cache'
+}
+
+jar.dependsOn deleteCache
+
+publishing {
+    publications {
+        register('mavenJava', MavenPublication) {
+            from components.java
+        }
+    }
+    repositories {
+        maven {
+            url "file://${project.projectDir}/repo"
+        }
+    }
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+}
+
+idea {
+    module {
+        downloadSources = true
+        downloadJavadoc = true
+    }
+}
