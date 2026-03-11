@@ -41,6 +41,10 @@ repositories {
         }
     }
     maven {
+        name = "BlameJared"
+        url = "https://maven.blamejared.com"
+    }
+    maven {
         url "https://maven.su5ed.dev/releases"
     }
 }
@@ -128,6 +132,14 @@ configurations {
     runtimeClasspath.extendsFrom localRuntime
 }
 
+def unifiedImplementationDeps = rootProject.ext.has('unifiedImplementationDeps')
+        ? rootProject.ext.unifiedImplementationDeps
+        : [
+                jei      : 'mezz.jei:jei-1.21.1-neoforge:19.25.0.325',
+                jade     : 'curse.maven:jade-324717:6291517',
+                patchouli: 'curse.maven:patchouli-306770:6842247'
+        ]
+
 tasks.named('processResources', Copy) {
     duplicatesStrategy = DuplicatesStrategy.INCLUDE
 
@@ -183,8 +195,8 @@ dependencies {
     implementation "net.neoforged:neoforge:${neo_version}"
 
 
-    implementation "curse.maven:jei-238222:7181665"
-    implementation "curse.maven:jade-324717:6291517"
+    implementation unifiedImplementationDeps.jei
+    implementation unifiedImplementationDeps.jade
     compileOnly("curse.maven:the-one-probe-245211:6106998")
 
     compileOnly("zlib:Sub:1.20.1-forge-0.0")
@@ -220,7 +232,7 @@ dependencies {
 
 //    onlyMainRuntimeOnly "curse.maven:euphoria-patches-915902:6137784"
 
-    implementation "curse.maven:patchouli-306770:6842247"
+    implementation unifiedImplementationDeps.patchouli
     compileOnly "curse.maven:kubejs-238086:7143884"
 //    implementation "curse.maven:rhino-416294:7104526"
 
