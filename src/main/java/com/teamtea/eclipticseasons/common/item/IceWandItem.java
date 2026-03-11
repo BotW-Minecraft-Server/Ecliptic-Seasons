@@ -179,19 +179,17 @@ public class IceWandItem extends Item {
                 // );
 
                 List<Integer> ys = new ArrayList<>();
-                List<BlockPos> blockPoss = new ArrayList<>();
                 for (int i = chunkPos.getMinBlockX(); i <= chunkPos.getMaxBlockX(); i++) {
                     for (int j = chunkPos.getMinBlockZ(); j <= chunkPos.getMaxBlockZ(); j++) {
                         int k = level.getHeight(Heightmap.Types.MOTION_BLOCKING, i, j) - 1;
                         BlockPos newPos = new BlockPos(i, k, j);
                         int sk = SectionPos.of(newPos).y();
                         if (!ys.contains(sk)) ys.add(sk);
-                        blockPoss.add(newPos);
                     }
                 }
 
                 for (ServerPlayer player : serverLevel.getChunkSource().chunkMap.getPlayers(chunkPos, false)) {
-                    MapChecker.sendChunkInfo(chunk, chunkPos, player, ys, blockPoss);
+                    MapChecker.sendChunkInfo(chunk, chunkPos, player, ys);
                 }
 
                 if (data.allSnowAble()) {
@@ -268,7 +266,7 @@ public class IceWandItem extends Item {
 
                 // just set one chunk dirty would not re compile chunk render cache
                 for (ServerPlayer player : serverLevel.getChunkSource().chunkMap.getPlayers(chunkPos, false)) {
-                    MapChecker.sendChunkInfo(chunk, chunkPos, player, List.of(sk), List.of(newPos));
+                    MapChecker.sendChunkInfo(chunk, chunkPos, player, List.of(sk));
                 }
 
                 if (data.allSnowAble()) {

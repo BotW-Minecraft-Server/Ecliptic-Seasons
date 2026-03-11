@@ -3,12 +3,10 @@ package com.teamtea.eclipticseasons.common.network.message;
 
 import com.teamtea.eclipticseasons.EclipticSeasons;
 import io.netty.buffer.ByteBuf;
-import net.minecraft.core.BlockPos;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class ChunkUpdateMessage implements CustomPacketPayload {
@@ -16,14 +14,12 @@ public class ChunkUpdateMessage implements CustomPacketPayload {
     public final int x;
     public final int z;
     public final List<Integer> y;
-    public final List<BlockPos> blockPosList;
 
-    public ChunkUpdateMessage(byte[] snowyArea, int x, int z, List<Integer> y, List<BlockPos> blockPosList) {
+    public ChunkUpdateMessage(byte[] snowyArea, int x, int z, List<Integer> y) {
         this.snowyArea = snowyArea;
         this.x = x;
         this.z = z;
         this.y = y;
-        this.blockPosList = blockPosList;
     }
 
     public static final Type<ChunkUpdateMessage> TYPE = new Type<>(EclipticSeasons.rl("chunk_snow"));
@@ -41,8 +37,6 @@ public class ChunkUpdateMessage implements CustomPacketPayload {
             chunkUpdateMessage -> chunkUpdateMessage.z,
             MessageCodec.intlistStreamCodec,
             chunkUpdateMessage -> chunkUpdateMessage.y,
-            MessageCodec.poslistStreamCodec,
-            chunkUpdateMessage -> chunkUpdateMessage.blockPosList,
             ChunkUpdateMessage::new
     );
 

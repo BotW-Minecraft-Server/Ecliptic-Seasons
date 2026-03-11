@@ -1054,7 +1054,7 @@ public class MapChecker {
     }
 
     public static void sendChunkInfo(LevelChunk chunk, ChunkPos chunkPos, ServerPlayer
-            player, List<Integer> section_y, List<BlockPos> clickedPos) {
+            player, List<Integer> section_y) {
         byte[] bytes = new byte[256];
         // var section_y = new HashSet<Integer>(chunk.getSectionsCount());
         // var section_y=new HashSet<Integer>();
@@ -1073,7 +1073,7 @@ public class MapChecker {
                 }
             }
         }
-        SimpleNetworkHandler.send(player, new ChunkUpdateMessage(bytes, chunk.getPos().x, chunk.getPos().z, section_y, clickedPos));
+        SimpleNetworkHandler.send(player, new ChunkUpdateMessage(bytes, chunk.getPos().x, chunk.getPos().z, section_y));
     }
 
     public static void sendChunkLoginInfo(ServerLevel serverLevel, LevelChunk chunk, ChunkPos
@@ -1087,7 +1087,7 @@ public class MapChecker {
         // chunk.removeData(ModContents.BIOME_HOLDER);
 
         // send others
-        sendChunkInfo(chunk, chunkPos, player, List.of(), List.of());
+        sendChunkInfo(chunk, chunkPos, player, List.of());
     }
 
     // todo 这里注意用接口走set
